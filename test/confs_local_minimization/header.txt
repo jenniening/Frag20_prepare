@@ -1,0 +1,6 @@
+%NProcShared=1
+%Mem=10GB
+
+#p B3LYP/6-31G* opt freq
+
+test

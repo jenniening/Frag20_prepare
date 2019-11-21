@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+#SBATCH --job-name=G_17
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=500:00
+#SBATCH --mem=10GB
+
+module purge
+module load gaussian/intel/g09e01
+
+srun run-gaussian ../test/confs_smiles/ginput/191.opt.com > ../test/confs_smiles/ginput/191.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/192.opt.com > ../test/confs_smiles/ginput/192.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/193.opt.com > ../test/confs_smiles/ginput/193.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/194.opt.com > ../test/confs_smiles/ginput/194.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/195.opt.com > ../test/confs_smiles/ginput/195.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/196.opt.com > ../test/confs_smiles/ginput/196.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/197.opt.com > ../test/confs_smiles/ginput/197.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/198.opt.com > ../test/confs_smiles/ginput/198.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/199.opt.com > ../test/confs_smiles/ginput/199.opt.log 2>&1
+srun run-gaussian ../test/confs_smiles/ginput/200.opt.com > ../test/confs_smiles/ginput/200.opt.log 2>&1

@@ -1,0 +1,347 @@
+import numpy as np
+import rdkit
+from rdkit import Chem
+from rdkit.Chem import AllChem 
+import torch
+
+
+class prepare_data:
+    def __init__(self, index, datadir, reference):
+        """
+        Use to get information we need for each molecule
+        
+        :param index: the index of current structure
+        :param datadir: the directory for all structure file and property file
+        :param reference: atomic reference energy for QM method
+
+        """
+        self._datadir = datadir
+        self._index = index
+        self._reference = reference
+        self._log = os.path.join(self.datadir, index + ".opt.log")
+        self._QMsdf = os.path.join(self.datadir, index + ".opt.sdf")
+        self._MMFFsdf = os.path.join(self.datadir, index + ".sdf")
+        self._loglines = self.log.readlines()
+        self._QMlines = self.QMsdf.readlines()
+        self._MMFFlines = self.MMFFsdf.readlines()
+        self._QMmol = Chem.SDMolSupplier(self._QMsdf)[0]
+        self._MMFFmol = Chem.SDMolSupplier(self._MMFFsdf)[0]
+        self._elementdict = {'H':1, 'B':5, 'C':6, 'N':7, 'O':8, 'F':9, 'P':15, 'S':16, 'Cl':17, 'Br':35}
+        self._elementdict_periodic = {"H":[1,1], "B":[2,3], "C":[2,4], "N":[2,5], "O":[2,6], "F":[2,7], "P":[3,5], "S":[3,6], "Cl":[3,7], "Br":[4,7]}
+        self._target_names = ['A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E']
+        self._conversions = [1., 1., 1., 1., 1., 1.,Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV]
+        self._init_target = None
+        self._target = None
+        self._natoms = None
+        self._elements = None
+        self._elements_p = None
+        self._charges_mulliken = None
+        self._MMFFcoords = None
+        self._QMcoords = None
+        self._dipole = None
+
+    @property
+    def datadir(self):
+        return self._datadir
+
+    @property
+    def index(self):
+        return self._index
+
+    @property
+    def reference(self):
+        return self._reference
+
+    @property
+    def elementdict(self):
+        return self._elementdict
+
+    @property
+    def elementdict_periodic(self):
+        return self._elementdict_periodic
+
+    @property
+    def target_names(self):
+        return self._target_names
+
+    @property
+    def conversions(self):
+        return self._conversions
+
+    @property
+    def log(self):
+        return self._log
+
+    @property 
+    def QMsdf(self):
+        return self._QMsdf
+
+    @property 
+    def MMFFsdf(self):
+        return self._MMFFsdf
+
+    @property 
+    def loglines(self):
+        return self._loglines
+    
+    @property
+    def QMlines(self):
+        return self._QMlines
+
+    @property
+    def MMFFlines(self):
+        return self._MMFFlines
+    @property 
+    def QMmol(self):
+        return self._QMmol
+
+    @property 
+    def MMFFmol(self):
+        return self._MMFFmol
+
+    @property 
+    def init_target(self):
+        if self._init_target == None:
+            self.get_initial_target()
+        return self._init_target
+    @property
+    def target(self):
+        if self._target == None:
+            self.get_target()
+        return self._get_target()
+
+    @property
+    def natoms(self):
+        if self._natoms == None:
+            self.get_elements()
+        return self._natoms
+
+    @property
+    def elements(self):
+        if self._elements == None:
+            self.get_elements()
+        return self._elements
+
+    @property
+    def elements_p(self):
+        if self._elements_p == None:
+            self.get_elements()
+        return self._elements_p
+
+    @property
+    def charges_mulliken(self):
+        if self._charges_mulliken == None:
+            self.get_mulliken_charges()
+        return self._charges_mulliken
+
+    @property
+    def dipole(self):
+        if self._dipole == None:
+            self.get_dipole()
+        return self._dipole
+
+    def get_initial_target(self):
+        """ 
+        Get the information from Gaussian 09 output xx.log, no conversion
+        Properties list contains 16 values. 
+        The first 15 is the same as in QM9 and the last value is E(B3LYP) (Ha unit)
+        """
+        out = [None for i in range(16)]
+        log = self._loglines
+        propdict = {i:None for i in self._target_names}
+        for idx, item in enumerate(log):
+            if item.startswith(' Rotational constants'):
+                vals = item.split()
+                propdict['A'] = vals[-3]
+                propdict['B'] = vals[-2]
+                propdict['C'] = vals[-1]
+            elif item.startswith(' Dipole moment'):
+                propdict['mu'] = log[idx+1].split()[-1]
+            elif item.startswith(' Isotropic polarizability'):
+                propdict['alpha'] = item.split()[-2]
+            elif (item.startswith(' Alpha  occ. eigenvalues') and
+                log[idx+1].startswith(' Alpha virt. eigenvalues')):
+                propdict['ehomo'] = log[idx+1].split()[4]
+                propdict['elumo'] = item.split()[-1]
+                propdict['egap'] = str(round(float(propdict['ehomo']) - float(propdict['elumo']),5))
+            elif item.startswith(' Electronic spatial extent'):
+                propdict['R2'] = item.split()[-1]
+            elif item.startswith(' Zero-point correction'):
+                propdict['zpve'] = item.split()[-2]
+            elif item.startswith(' Sum of electronic and zero-point Energies'):
+                propdict['U0'] = item.split()[-1]
+            elif item.startswith(' Sum of electronic and thermal Energies'):
+                propdict['U'] = item.split()[-1]
+            elif item.startswith(' Sum of electronic and thermal Enthalpies'):
+                propdict['H'] = item.split()[-1]
+            elif item.startswith(' Sum of electronic and thermal Free Energies'):
+                propdict['G'] = item.split()[-1]
+            elif item.startswith(' Total       '):
+                propdict['Cv'] = item.split()[-2]
+            elif item.startswith(' SCF Done'):
+                propdict['E'] = item.split()[4]
+        try:
+            propvals = [float(propdict[i]) for i in proplist]
+        except:
+            propvals = []
+            for i in proplist:
+                if propdict[i] != None and propdict[i] != "************" and propdict[i] != "2.846627976811D+03":
+                    propvals.append(float(propdict[i]))
+                else:
+                    propvals.append(None)
+        self._target = propvals
+
+    def get_target(self):
+        """ Get properties for each molecule, and convert properties in Hartree unit into eV unit """
+        conversions_dict = {}
+        for i in range(17):
+            conversions_dict[i] = self._conversions[i]
+        self._target = [float(self._init_target[i])*conversions_dict[i] for i in range(1,17)]
+        reference_total_1 = np.sum([self._reference["atom_ref"][i][1] for i in self._elements])
+        reference_total_2 = np.sum([self._reference["atom_ref"][i][2] for i in self._elements])
+        reference_total_3 = np.sum([self._reference["atom_ref"][i][3] for i in self._elements])
+        reference_total_4 = np.sum([self._reference["atom_ref"][i][4] for i in self._elements])
+        self._target.append(self._target[12] - reference_total_1)
+        self._target.append(self._target[13] - reference_total_2)
+        self._target.append(self._target[14] - reference_total_3)
+        self._target.append(self._target[15] - reference_total_4)
+
+    def get_elements(self):
+        """ Get elements infor for both atomic number, and periodic based """
+        QMnatoms = int(self._QMlines[3].split()[0])
+        MMFFnatoms = int(self._MMFFlines[3].split()[0])
+        assert QMnatoms == MMFFnatoms, "Error: different number of atoms in mmff and qm optimized files"
+        self._natoms = QMnatoms
+        atoms = lines[4:self._natoms + 4]
+        elements = []
+        elements_p = []
+        for atom in atoms:
+            atom = atom.split()
+            elements.append(self._elementdict[atom[3]])
+            elements_p.append(self._elementdict_periodic[atom[3]])
+        self.elements = elements
+        self.elements_p = elements_p
+
+    def get_coordinates(self):
+        """ Get atom coordinates for both MMFF and QM """
+        atoms_MMFF = self._MMFFlines[4:self._natom + 4]
+        atoms_QM = self._QMlines[4:self._natom + 4]
+        positions_QM = []
+        positions_MMFF = []
+        for atom in atoms_QM:
+            atom = atom.split()
+            positions_QM.append([float(pos) for pos in atom[:3]])
+
+        for atom in atoms_MMFF:
+            atom = atom.split()
+            positions_MMFF.append([float(pos) for pos in atom[:3]])
+        
+        self._MMFFcoords = positions_MMFF
+        self._QMcoords = positions_QM
+        
+    def get_mulliken_charges(self):
+        """ Get Mulliken charges """
+        index = [ idx for idx, line in enumerate(self._loglines) if line.startswith(" Mulliken charges:")][0] + 2
+        natoms_old = self._natoms
+        try: 
+            charges = [float(line.split()[-1]) for line in self._loglines[index: index + natoms]]
+        except:
+            charges = []
+            for idx, line in enumerate(self._loglines[index:]):
+                if idx < self._natoms:
+                    ### remove calculation comments in Mulliken charges part ###
+                    try: 
+                        charge = float(line.split()[-1])
+                        charges.append(charge) 
+                    except:
+                        print(line)
+                        natoms += 1
+                        continue
+        assert len(charges) == natoms_old, "Error: charges are wrong"
+        self._charges_mulliken = charges
+    
+    def get_dipole(self):
+        """ Calculate dipole using coordinates and charge for each atom """
+        coords = self._QMcoords
+        dipole = [[coords[i][0] * charges[i],coords[i][1] * charges[i], coords[i][2] * charges[i]] for i in range(self._natoms)]
+        dipole = np.sum(dipole,axis = 0)
+        self._dipole = dipole  
+    
+            
+def prepre_PhysNet_input(index_list, datadir, outfile, reference, largest_num_atoms=29):
+    """
+    Generate standard PhysNet input numpy file 
+    
+    :param index_list: the list for all input indexes
+    :param datadir: directory for all sdf and log files
+    :param outfile: output name for the numpy file
+    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
+    :param largest_num_atoms: the largest number of atoms of all molecules, defaults to 29(QM9), should be got before the data prepartion
+    notice: this is for neutral, equilibrium molecules (at local minimization point).
+    """
+    R_list,Q_list,D_list,E_list,F_list,Z_list,N_list = [] * 7
+    for idx, i in enumerate(index_list):
+        coords = [[0.0,0.0,0.0] for i in range(largest_num_atoms)]
+        atoms = [0 for i in range(largest_num_atoms)]
+        total_charge = 0
+        tmp_data = prepare_data(i, datadir, reference)
+        num_atoms = tmp_data.natoms
+        coords_new = tmp_data.QMcoords
+        charges = tmp_data.charges_mulliken
+        coords[0:num_atoms] = coords_new
+        dipole = tmp_data.dipole
+        atoms_new = tmp_data.elements
+        atoms[0:num_atoms] = atoms_new
+        energy = tmp_data.target[-1]
+        force = [[0,0,0] for i in range(largest_num_atoms)]
+    
+        R_list.append(coords)
+        Q_list.append(total_charge)
+        D_list.append(dipole)
+        E_list.append(energy)
+        F_list.append(force)
+        Z_list.append(atoms)
+        N_list.append(num_atoms)
+        if idx % 10000 == 0:
+            print(idx)
+
+    np.savez(outfile, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
+
+def prepare_torch(index_list, output, method="QM"):
+    """
+    Save rdkit mols into torch file
+    
+    :param index_list: the list for all input indexes
+    :param output: output name for the numpy file
+    :param method: optimization method, defaults to "QM"
+
+    """
+    sdflist = []
+    for idx, i in enumerate(index_list):
+        tmp_data = prepare_data(i, datadir, reference)
+        if method == "QM":
+            sdflist.append(tmp_data.QMmol)
+        else:
+            sdflist.append(tmp_data.MMFFmol)
+    torch.save(sdflist, output)
+
+def prepare_target_csv(index_list, output):
+    """
+    Save targets into csv file
+    
+    :param index_list: the list for all input indexes
+    :param output: output name for the numpy file
+
+    """
+    out = open(output, "w")
+    header = ['index','A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E', 'U0_atom', "U_atom", "H_atom", "G_atom"]
+    for idx, i in enumerate(index_list):
+        tmp_data = prepare_data(i, datadir, reference)
+        out.write(str(i) + "," + ",".join(tmp_data.target) + "\n")
+    out.close()
+
+if __name__ == "__main__":
+    datadir = None
+    reference = None
+    index_list = None
+    prepare_target_csv()
