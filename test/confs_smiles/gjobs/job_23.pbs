@@ -9,7 +9,7 @@
 module purge
 module load gaussian/intel/g09e01
 
-srun run-gaussian ../test/confs_smiles/ginput/251.opt.com > ../test/confs_smiles/ginput/251.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/252.opt.com > ../test/confs_smiles/ginput/252.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/253.opt.com > ../test/confs_smiles/ginput/253.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/254.opt.com > ../test/confs_smiles/ginput/254.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/251.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/251.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/252.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/252.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/253.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/253.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/254.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/254.opt.log 2>&1

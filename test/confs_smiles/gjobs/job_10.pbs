@@ -9,13 +9,13 @@
 module purge
 module load gaussian/intel/g09e01
 
-srun run-gaussian ../test/confs_smiles/ginput/121.opt.com > ../test/confs_smiles/ginput/121.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/122.opt.com > ../test/confs_smiles/ginput/122.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/123.opt.com > ../test/confs_smiles/ginput/123.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/124.opt.com > ../test/confs_smiles/ginput/124.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/125.opt.com > ../test/confs_smiles/ginput/125.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/126.opt.com > ../test/confs_smiles/ginput/126.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/127.opt.com > ../test/confs_smiles/ginput/127.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/128.opt.com > ../test/confs_smiles/ginput/128.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/129.opt.com > ../test/confs_smiles/ginput/129.opt.log 2>&1
-srun run-gaussian ../test/confs_smiles/ginput/130.opt.com > ../test/confs_smiles/ginput/130.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/121.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/121.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/122.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/122.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/123.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/123.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/124.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/124.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/125.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/125.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/126.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/126.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/127.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/127.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/128.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/128.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/129.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/129.opt.log 2>&1
+srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/130.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/130.opt.log 2>&1
