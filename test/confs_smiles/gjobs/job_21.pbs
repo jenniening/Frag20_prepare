@@ -3,19 +3,19 @@
 #SBATCH --job-name=G_21
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=500:00
+#SBATCH --time=5:00:00
 #SBATCH --mem=10GB
 
 module purge
 module load gaussian/intel/g09e01
 
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/231.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/231.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/232.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/232.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/233.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/233.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/234.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/234.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/235.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/235.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/236.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/236.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/237.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/237.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/238.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/238.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/239.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/239.opt.log 2>&1
-srun run-gaussian /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/240.opt.com > /Users/jianinglu1/Documents/GitHub/1Dto3D_DataGen/test/confs_smiles/ginput/240.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/231.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/231.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/232.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/232.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/233.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/233.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/234.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/234.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/235.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/235.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/236.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/236.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/237.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/237.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/238.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/238.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/239.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/239.opt.log 2>&1
+srun run-gaussian /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/240.opt.com > /beegfs/jl7003/1Dto3D_DataGen/test/confs_smiles/ginput/240.opt.log 2>&1
