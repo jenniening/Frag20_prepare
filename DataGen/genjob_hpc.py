@@ -25,14 +25,17 @@ def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem
         job.close()
 
 
-def sub_job(job_list, id1, id2):
+def sub_job(job_list, id1, id2, jobdir):
     """
     Submit job 
     job_list: the list of jobs, this can be same as index_list when num_jobs=1, or can be a list of continous numbers 
     """
+    olddir = os.getcwd()
+    os.chdir(jobdir)
     for n in job_list[id1:id2]:
         print(n)
         os.system("sbatch job_" + str(n) + ".pbs")
+    os.chdir(olddir)
     
 def check_gaussian(index_list, datadir):
     """
