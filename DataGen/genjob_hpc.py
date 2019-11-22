@@ -41,7 +41,7 @@ def check_gaussian(index_list, datadir):
     """
     Check whether the gaussian calculation finishes normally 
     """
-    error = open("Gaussian_error.csv", "w")
+    error = open(os.path.join(datadir, "Gaussian_error.csv"), "w")
     for i in index_list:
         i = str(i)
         try: 

@@ -7,7 +7,7 @@ import torch
 import os
 
 
-class prepare_data:
+class data_infor:
     def __init__(self, index, datadir, reference, ftype="confs"):
         """
         Use to get information we need for each molecule
@@ -15,11 +15,13 @@ class prepare_data:
         :param index: the index of current structure
         :param datadir: the directory for all structure file and property file
         :param reference: atomic reference energy for QM method
+        :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
 
         """
         self._datadir = datadir
         self._index = index
         self._reference = np.load(reference)["atom_ref"]
+        ### log file is the Gaussin output file ###
         self._log = os.path.join(self._datadir, index + ".opt.log")
         self._QMsdf = os.path.join(self._datadir, index + ".opt.sdf")
         if ftype == "cry":
@@ -31,18 +33,31 @@ class prepare_data:
         self._MMFFlines = open(self._MMFFsdf).readlines()
         self._QMmol = Chem.SDMolSupplier(self._QMsdf)[0]
         self._MMFFmol = Chem.SDMolSupplier(self._MMFFsdf)[0]
+        ### elementdict is for conversion of element, which is the atomic number of elemnet ###
         self._elementdict = {'H':1, 'B':5, 'C':6, 'N':7, 'O':8, 'F':9, 'P':15, 'S':16, 'Cl':17, 'Br':35}
+        ### elementdict_periodic is for conversion of element_p, which is the column and period of element ###
         self._elementdict_periodic = {"H":[1,1], "B":[2,3], "C":[2,4], "N":[2,5], "O":[2,6], "F":[2,7], "P":[3,5], "S":[3,6], "Cl":[3,7], "Br":[4,7]}
+        ### initial target names we extracted from Gaussian output file ###
         self._target_names = ['A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E']
+        ### conversions is for unit conversion, here, we converted all energy unit from Hartree into eV, which is same as the unit in atom reference energy###
         self._conversions = [ 1., 1., 1., 1., 1.,Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV]
+        ### init_target is the target directly extracted from Gaussian log file ###
         self._init_target = None
+        ### target is the target after conversion and last four are atomiztion energies for U0, U, H, G ###
         self._target = None
+        ### number of atoms ###
         self._natoms = None
+        ### element atomic number ###
         self._elements = None
+        ### element with column and period ###
         self._elements_p = None
+        ### mulliken charge ###
         self._charges_mulliken = None
+        ### coords from MMFF optimized geomerty ###
         self._MMFFcoords = None
+        ### coords from QM optimized geometry ###
         self._QMcoords = None
+        ### molecule dipole vector [x, y, z] ###
         self._dipole = None
 
     @property
@@ -284,23 +299,24 @@ class prepare_data:
         self._dipole = dipole  
     
             
-def prepre_PhysNet_input(index_list, datadir, outfile, reference, ftype="confs", largest_num_atoms=29):
+def prepre_PhysNet_input(index_list, output, datadir, reference, ftype="confs", largest_num_atoms=29):
     """
     Generate standard PhysNet input numpy file 
     
     :param index_list: the list for all input indexes
+    :param output: output name for the numpy file
     :param datadir: directory for all sdf and log files
-    :param outfile: output name for the numpy file
     :param reference: atomic reference energies for QM method, which is used to get the atomization energies
-    :param largest_num_atoms: the largest number of atoms of all molecules, defaults to 29(QM9), should be got before the data prepartion
+    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+    :param largest_num_atoms: the largest number of atoms of dataset, defaults to 29(QM9), should be got before the data prepartion.
     notice: this is for neutral, equilibrium molecules (at local minimization point).
     """
-    R_list,Q_list,D_list,E_list,F_list,Z_list,N_list = [] * 7
+    R_list,Q_list,D_list,E_list,F_list,Z_list,N_list = [], [], [], [], [], [], []
     for idx, i in enumerate(index_list):
         coords = [[0.0,0.0,0.0] for i in range(largest_num_atoms)]
         atoms = [0 for i in range(largest_num_atoms)]
         total_charge = 0
-        tmp_data = prepare_data(i, datadir, reference, ftype)
+        tmp_data = data_infor(i, datadir, reference, ftype)
         num_atoms = tmp_data.natoms
         coords_new = tmp_data.QMcoords
         coords[0:num_atoms] = coords_new
@@ -317,23 +333,26 @@ def prepre_PhysNet_input(index_list, datadir, outfile, reference, ftype="confs",
         F_list.append(force)
         Z_list.append(atoms)
         N_list.append(num_atoms)
-        if idx % 10000 == 0:
+        if idx % 10000 == 0 and idx != 0:
             print(idx)
 
-    np.savez(outfile, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
+    np.savez(output, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
 
-def prepare_torch(index_list, output, ftype="confs", method="QM"):
+def prepare_torch(index_list, output, datadir, reference, ftype="confs", method="QM"):
     """
     Save rdkit mols into torch file
     
     :param index_list: the list for all input indexes
     :param output: output name for the numpy file
+    :param datadir: directory for all sdf and log files
+    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
+    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
     :param method: optimization method, defaults to "QM"
 
     """
     sdflist = []
     for idx, i in enumerate(index_list):
-        tmp_data = prepare_data(i, datadir, reference, ftype)
+        tmp_data = data_infor(i, datadir, reference, ftype)
         if method == "QM":
             sdflist.append(tmp_data.QMmol)
         else:
@@ -342,26 +361,25 @@ def prepare_torch(index_list, output, ftype="confs", method="QM"):
             print("Finish ", idx)
     torch.save(sdflist, output)
 
-def prepare_target_csv(index_list, output, ftype="confs",):
+def prepare_target_csv(index_list, output, datadir, reference, ftype="confs",):
     """
     Save targets into csv file
     
     :param index_list: the list for all input indexes
     :param output: output name for the numpy file
+    :param datadir: directory for all sdf and log files
+    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
+    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
 
     """
     out = open(output, "w")
     header = ['index','A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E', 'U0_atom', "U_atom", "H_atom", "G_atom"]
     out.write(",".join(header) + "\n")
     for idx, i in enumerate(index_list):
-        tmp_data = prepare_data(i, datadir, reference, ftype)
-        out.write(str(i) + "," + ",".join(tmp_data.target) + "\n")
+        tmp_data = data_infor(i, datadir, reference, ftype)
+        out.write(str(i) + "," + ",".join([str(i) for i in tmp_data.target]) + "\n")
         if idx % 10000 == 0 and idx != 0:
             print("Finish ", idx) 
     out.close()
 
-if __name__ == "__main__":
-    datadir = None
-    reference = None
-    index_list = None
-    prepare_target_csv()
+
