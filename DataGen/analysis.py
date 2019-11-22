@@ -15,6 +15,7 @@ class getInfor:
         self._ftype = ["smiles", "sdf", "sdf"]
         self._isomericSmiles = isomericSmiles
         self._infor = []
+        self._inforname = ["SMILES", "initial_InChI", "initial_SMILES", "MMFF_InChI", "MMFF_SMILES", "QM_InChI", "QM_SMILES"]
 
     @property
     def infile(self):
@@ -26,11 +27,15 @@ class getInfor:
     
     @property
     def isomericSmiles(self):
-        return self.isomericSmiles
+        return self._isomericSmiles
+    
+    @property
+    def inforname(self):
+        return self._inforname
 
     @property
     def infor(self):
-        if infor == []:
+        if self._infor == []:
             self.getAll3()
         return self._infor
 
@@ -39,9 +44,10 @@ class getInfor:
         """
         Get information for all three files, if this process failed, the output will be None, None
         """
+        self._infor.append(self._infile[0])
         for idx, infile in enumerate(self._infile):
             try:
-                self._infor.extend(getInfor(infile, self._ftype[idx], True, self._isomericSmiles))
+                self._infor.extend(self.getInfor(infile, self._ftype[idx], True, self._isomericSmiles))
             except:
                 self._infor.extend(["None","None"])
     
@@ -77,14 +83,15 @@ if __name__ == "__main__":
     index_list = [line.split(",")[0] for line in open(index_file) if line.split(",")[0] not in error_list][1:]
     smiles = [line.split(",")[4].rstrip() for line in open(index_file) if line.split(",")[0] not in error_list][1:]
     datadir = "/beegfs/jl7003/ccdc/cry_min"
+    isomericSmiles = True
     for idx, i in enumerate(index_list):
         ### first, convert log file into sdf file ###
         convert_tosdf(datadir, i)
         infile1 = smiles[idx]
         infile2 = os.path.join(datadir, str(i) + ".sdf")
         infile3 = os.path.join(datadir, str(i) + ".opt.sdf")
-        infile = getInfor()
-        out.write(str(i) + "," + infile_1 + "," + ",".join(infile._infor) + "\n")
+        infile = getInfor(infile1, infile2, infile3, isomericSmiles)
+        out.write(str(i) + "," + infile_1 + "," + ",".join(infile.infor) + "\n")
     out.close()
 
     

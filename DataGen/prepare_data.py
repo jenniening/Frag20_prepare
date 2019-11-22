@@ -1,12 +1,14 @@
 import numpy as np
+from ase.units import Hartree, eV, Bohr, Ang
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem 
 import torch
+import os
 
 
 class prepare_data:
-    def __init__(self, index, datadir, reference):
+    def __init__(self, index, datadir, reference, ftype="confs"):
         """
         Use to get information we need for each molecule
         
@@ -17,19 +19,22 @@ class prepare_data:
         """
         self._datadir = datadir
         self._index = index
-        self._reference = reference
-        self._log = os.path.join(self.datadir, index + ".opt.log")
-        self._QMsdf = os.path.join(self.datadir, index + ".opt.sdf")
-        self._MMFFsdf = os.path.join(self.datadir, index + ".sdf")
-        self._loglines = self.log.readlines()
-        self._QMlines = self.QMsdf.readlines()
-        self._MMFFlines = self.MMFFsdf.readlines()
+        self._reference = np.load(reference)["atom_ref"]
+        self._log = os.path.join(self._datadir, index + ".opt.log")
+        self._QMsdf = os.path.join(self._datadir, index + ".opt.sdf")
+        if ftype == "cry":
+            self._MMFFsdf = os.path.join(self._datadir, index + "_min.sdf")
+        else:
+            self._MMFFsdf = os.path.join(self._datadir, index + ".sdf")
+        self._loglines = open(self._log).readlines()
+        self._QMlines = open(self._QMsdf).readlines()
+        self._MMFFlines = open(self._MMFFsdf).readlines()
         self._QMmol = Chem.SDMolSupplier(self._QMsdf)[0]
         self._MMFFmol = Chem.SDMolSupplier(self._MMFFsdf)[0]
         self._elementdict = {'H':1, 'B':5, 'C':6, 'N':7, 'O':8, 'F':9, 'P':15, 'S':16, 'Cl':17, 'Br':35}
         self._elementdict_periodic = {"H":[1,1], "B":[2,3], "C":[2,4], "N":[2,5], "O":[2,6], "F":[2,7], "P":[3,5], "S":[3,6], "Cl":[3,7], "Br":[4,7]}
         self._target_names = ['A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E']
-        self._conversions = [1., 1., 1., 1., 1., 1.,Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV]
+        self._conversions = [ 1., 1., 1., 1., 1.,Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, Hartree/eV, 1., Hartree/eV]
         self._init_target = None
         self._target = None
         self._natoms = None
@@ -108,7 +113,7 @@ class prepare_data:
     def target(self):
         if self._target == None:
             self.get_target()
-        return self._get_target()
+        return self._target
 
     @property
     def natoms(self):
@@ -135,6 +140,18 @@ class prepare_data:
         return self._charges_mulliken
 
     @property
+    def MMFFcoords(self):
+        if self._MMFFcoords == None:
+            self.get_coordinates()
+        return self._MMFFcoords
+
+    @property
+    def QMcoords(self):
+        if self._QMcoords == None:
+            self.get_coordinates()
+        return self._QMcoords
+
+    @property
     def dipole(self):
         if self._dipole == None:
             self.get_dipole()
@@ -146,7 +163,6 @@ class prepare_data:
         Properties list contains 16 values. 
         The first 15 is the same as in QM9 and the last value is E(B3LYP) (Ha unit)
         """
-        out = [None for i in range(16)]
         log = self._loglines
         propdict = {i:None for i in self._target_names}
         for idx, item in enumerate(log):
@@ -181,30 +197,30 @@ class prepare_data:
             elif item.startswith(' SCF Done'):
                 propdict['E'] = item.split()[4]
         try:
-            propvals = [float(propdict[i]) for i in proplist]
+            propvals = [float(propdict[i]) for i in self._target_names]
         except:
             propvals = []
-            for i in proplist:
+            for i in self._target_names:
                 if propdict[i] != None and propdict[i] != "************" and propdict[i] != "2.846627976811D+03":
                     propvals.append(float(propdict[i]))
                 else:
                     propvals.append(None)
-        self._target = propvals
+        self._init_target = propvals
 
     def get_target(self):
         """ Get properties for each molecule, and convert properties in Hartree unit into eV unit """
         conversions_dict = {}
-        for i in range(17):
+        for i in range(16):
             conversions_dict[i] = self._conversions[i]
-        self._target = [float(self._init_target[i])*conversions_dict[i] for i in range(1,17)]
-        reference_total_1 = np.sum([self._reference["atom_ref"][i][1] for i in self._elements])
-        reference_total_2 = np.sum([self._reference["atom_ref"][i][2] for i in self._elements])
-        reference_total_3 = np.sum([self._reference["atom_ref"][i][3] for i in self._elements])
-        reference_total_4 = np.sum([self._reference["atom_ref"][i][4] for i in self._elements])
-        self._target.append(self._target[12] - reference_total_1)
-        self._target.append(self._target[13] - reference_total_2)
-        self._target.append(self._target[14] - reference_total_3)
-        self._target.append(self._target[15] - reference_total_4)
+        self._target = [float(self.init_target[i])*conversions_dict[i] for i in range(16)]
+        reference_total_1 = np.sum([self._reference[i][1] for i in self.elements])
+        reference_total_2 = np.sum([self._reference[i][2] for i in self.elements])
+        reference_total_3 = np.sum([self._reference[i][3] for i in self.elements])
+        reference_total_4 = np.sum([self._reference[i][4] for i in self.elements])
+        self._target.append(self._target[10] - reference_total_1)
+        self._target.append(self._target[11] - reference_total_2)
+        self._target.append(self._target[12] - reference_total_3)
+        self._target.append(self._target[13] - reference_total_4)
 
     def get_elements(self):
         """ Get elements infor for both atomic number, and periodic based """
@@ -212,20 +228,20 @@ class prepare_data:
         MMFFnatoms = int(self._MMFFlines[3].split()[0])
         assert QMnatoms == MMFFnatoms, "Error: different number of atoms in mmff and qm optimized files"
         self._natoms = QMnatoms
-        atoms = lines[4:self._natoms + 4]
+        atoms = self._QMlines[4:self._natoms + 4]
         elements = []
         elements_p = []
         for atom in atoms:
             atom = atom.split()
             elements.append(self._elementdict[atom[3]])
             elements_p.append(self._elementdict_periodic[atom[3]])
-        self.elements = elements
-        self.elements_p = elements_p
+        self._elements = elements
+        self._elements_p = elements_p
 
     def get_coordinates(self):
         """ Get atom coordinates for both MMFF and QM """
-        atoms_MMFF = self._MMFFlines[4:self._natom + 4]
-        atoms_QM = self._QMlines[4:self._natom + 4]
+        atoms_MMFF = self._MMFFlines[4:self.natoms + 4]
+        atoms_QM = self._QMlines[4:self.natoms + 4]
         positions_QM = []
         positions_MMFF = []
         for atom in atoms_QM:
@@ -242,7 +258,7 @@ class prepare_data:
     def get_mulliken_charges(self):
         """ Get Mulliken charges """
         index = [ idx for idx, line in enumerate(self._loglines) if line.startswith(" Mulliken charges:")][0] + 2
-        natoms_old = self._natoms
+        natoms_old = self.natoms
         try: 
             charges = [float(line.split()[-1]) for line in self._loglines[index: index + natoms]]
         except:
@@ -262,13 +278,13 @@ class prepare_data:
     
     def get_dipole(self):
         """ Calculate dipole using coordinates and charge for each atom """
-        coords = self._QMcoords
-        dipole = [[coords[i][0] * charges[i],coords[i][1] * charges[i], coords[i][2] * charges[i]] for i in range(self._natoms)]
+        coords = self.QMcoords
+        dipole = [[coords[i][0] * self.charges_mulliken[i],coords[i][1] * self.charges_mulliken[i], coords[i][2] * self.charges_mulliken[i]] for i in range(self.natoms)]
         dipole = np.sum(dipole,axis = 0)
         self._dipole = dipole  
     
             
-def prepre_PhysNet_input(index_list, datadir, outfile, reference, largest_num_atoms=29):
+def prepre_PhysNet_input(index_list, datadir, outfile, reference, ftype="confs", largest_num_atoms=29):
     """
     Generate standard PhysNet input numpy file 
     
@@ -284,15 +300,14 @@ def prepre_PhysNet_input(index_list, datadir, outfile, reference, largest_num_at
         coords = [[0.0,0.0,0.0] for i in range(largest_num_atoms)]
         atoms = [0 for i in range(largest_num_atoms)]
         total_charge = 0
-        tmp_data = prepare_data(i, datadir, reference)
+        tmp_data = prepare_data(i, datadir, reference, ftype)
         num_atoms = tmp_data.natoms
         coords_new = tmp_data.QMcoords
-        charges = tmp_data.charges_mulliken
         coords[0:num_atoms] = coords_new
         dipole = tmp_data.dipole
         atoms_new = tmp_data.elements
         atoms[0:num_atoms] = atoms_new
-        energy = tmp_data.target[-1]
+        energy = tmp_data.target[16]
         force = [[0,0,0] for i in range(largest_num_atoms)]
     
         R_list.append(coords)
@@ -307,7 +322,7 @@ def prepre_PhysNet_input(index_list, datadir, outfile, reference, largest_num_at
 
     np.savez(outfile, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
 
-def prepare_torch(index_list, output, method="QM"):
+def prepare_torch(index_list, output, ftype="confs", method="QM"):
     """
     Save rdkit mols into torch file
     
@@ -318,14 +333,16 @@ def prepare_torch(index_list, output, method="QM"):
     """
     sdflist = []
     for idx, i in enumerate(index_list):
-        tmp_data = prepare_data(i, datadir, reference)
+        tmp_data = prepare_data(i, datadir, reference, ftype)
         if method == "QM":
             sdflist.append(tmp_data.QMmol)
         else:
             sdflist.append(tmp_data.MMFFmol)
+        if idx % 10000 == 0 and idx != 0:
+            print("Finish ", idx)
     torch.save(sdflist, output)
 
-def prepare_target_csv(index_list, output):
+def prepare_target_csv(index_list, output, ftype="confs",):
     """
     Save targets into csv file
     
@@ -335,9 +352,12 @@ def prepare_target_csv(index_list, output):
     """
     out = open(output, "w")
     header = ['index','A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E', 'U0_atom', "U_atom", "H_atom", "G_atom"]
+    out.write(",".join(header) + "\n")
     for idx, i in enumerate(index_list):
-        tmp_data = prepare_data(i, datadir, reference)
+        tmp_data = prepare_data(i, datadir, reference, ftype)
         out.write(str(i) + "," + ",".join(tmp_data.target) + "\n")
+        if idx % 10000 == 0 and idx != 0:
+            print("Finish ", idx) 
     out.close()
 
 if __name__ == "__main__":
