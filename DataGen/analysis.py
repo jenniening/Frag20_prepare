@@ -91,7 +91,7 @@ if __name__ == "__main__":
         infile2 = os.path.join(datadir, str(i) + ".sdf")
         infile3 = os.path.join(datadir, str(i) + ".opt.sdf")
         infile = getInfor(infile1, infile2, infile3, isomericSmiles)
-        out.write(str(i) + "," + infile_1 + "," + ",".join(infile.infor) + "\n")
+        out.write(str(i) + "," + infile1 + "," + ",".join(infile.infor) + "\n")
     out.close()
 
     
