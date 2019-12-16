@@ -36,22 +36,22 @@ class getInfor:
     @property
     def infor(self):
         if self._infor == []:
-            self.getAll3()
+            self._getAll3()
         return self._infor
 
 
-    def getAll3(self):
+    def _getAll3(self):
         """
         Get information for all three files, if this process failed, the output will be None, None
         """
         self._infor.append(self._infile[0])
         for idx, infile in enumerate(self._infile):
             try:
-                self._infor.extend(self.getInfor(infile, self._ftype[idx], True, self._isomericSmiles))
+                self._infor.extend(self._getInfor(infile, self._ftype[idx], True, self._isomericSmiles))
             except:
                 self._infor.extend(["None","None"])
     
-    def getInfor(self, infile, file_type, removeHs, isomericSmiles):
+    def _getInfor(self, infile, file_type, removeHs, isomericSmiles):
         """
         Generate SMILES and InChI strings
         """
