@@ -1,6 +1,9 @@
 import os
 import rdkit
 from rdkit import Chem
+import rdkit.Chem.Descriptors as Descriptors
+import pandas as pd
+from DataGen.util import convert_logtosdf
 
 class getInfor:
     """
@@ -63,35 +66,105 @@ class getInfor:
         Smiles = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
         return [Inchi, Smiles]
 
-
-def convert_tosdf(datadir, index):
+class check:
     """
-    Convert G09 log to SDF file
-    Input file: xxxx.opt.log
-    Output file: xxxx.opt.sdf
+    Analysis data after QM calculations
     """
-    fn = os.path.join(datadir, str(index)+ '.opt.log')
-    outfn = os.path.join(datadir, str(index)+ '.opt.sdf')
-    cmd = 'obabel -ig03 ' + fn + ' -osdf -O ' + outfn
-    os.system(cmd)
+    def __init__(self, datadir, index_list, outdir, confs=False):
+        """
+        :param datadir: directory for all data files including MMFF optimized sdf file and QM calculated log file
+        :param outdir: directory for all output data index files 
+        :param index_list: index_list for all successful calculated files. Exp. 1.opt.log, 2.opt.log --> index_list[1,2]
+        :param confs: if calculated files are from different conformations, consf=True, else, False. Defaults to False
+        """
+        self.datadir = os.path.abspath(datadir)
+        self.outdir = os.path.abspath(outdir)
+        self.olddir = os.getcwd()
+        self.index_list = index_list
+        self.confs = confs
+        if self.confs:
+            self.suffix = ".sdf"
+        else:
+            self.suffix = "_min.sdf"
+        self.smiles_list, self.index_init_list = self.__get_relation__()
 
-if __name__ == "__main__":
-    out = open("Infor_isomeric.csv", "w")
-    index_file = "/beegfs/jl7003/ccdc/script/Index_ccdc_20_overlapwithmol20_removeempty.csv"
-    error_file = "/beegfs/jl7003/ccdc/script/Error_20_iteration_1.csv"
-    error_list = [line.rstrip() for line in open(error_file)]
-    index_list = [line.split(",")[0] for line in open(index_file) if line.split(",")[0] not in error_list][1:]
-    smiles = [line.split(",")[4].rstrip() for line in open(index_file) if line.split(",")[0] not in error_list][1:]
-    datadir = "/beegfs/jl7003/ccdc/cry_min"
-    isomericSmiles = True
-    for idx, i in enumerate(index_list):
-        ### first, convert log file into sdf file ###
-        convert_tosdf(datadir, i)
-        infile1 = smiles[idx]
-        infile2 = os.path.join(datadir, str(i) + ".sdf")
-        infile3 = os.path.join(datadir, str(i) + ".opt.sdf")
-        infile = getInfor(infile1, infile2, infile3, isomericSmiles)
-        out.write(str(i) + "," + infile_1 + "," + ",".join(infile.infor) + "\n")
-    out.close()
+    def __get_relation__(self):
+        """
+        Get initial index list and smiles list for each calculated file
+        """
+        os.chdir(self.datadir)
+        smiles_list = []
+        init_index_list = []
+        for i in self.index_list:
+            with open(str(i) + self.suffix) as infile:
+                lines = infile.readlines()
+                index_init = lines[-9].rstrip()
+                smiles_init = lines[-15].rstrip()
+                smiles_list.append(smiles_init)
+                init_index_list.append(index_init)
+        os.chdir(self.olddir)
+        return smiles_list, init_index_list
+
+    def update_list(self,infile):
+        """
+        Update current index_list and initial_index_list based on provided file
+        :param infile: data index file
+        """
+        data = pd.read_csv(os.path.join(self.outdir,infile))
+        self.index_list = list(data["index"])
+        if "initial_index" in data.columns:
+            self.initial_index_list = list(data["initial_index"])
+
+    def built_initialdata(self):
+        """
+        Build initial information data
+        """
+        os.chdir(self.datadir)
+        out = open(os.path.join(self.outdir,"initial_dataset.csv"), "w")
+        out.write("index initial_index SMILES initial_InChI initial_SMILES MMFF_InChI MMFF_SMILES QM_InChI QM_SMILES\n")
+        for idx, i in enumerate(self.index_list):
+            infile1 = self.smiles_list[idx]
+            infile2 = str(i) + self.suffix
+            infile3 = str(i) + ".opt.sdf"
+            if not os.path.exists(infile3):
+                convert_logtosdf(self.datadir, i)
+            infile = getInfor(infile1, infile2, infile3, isomericSmiles=False)
+            out.write(str(i) + " " + self.index_init_list[idx] +  " " + " ".join(infile.infor) + "\n")
+        out.close()
+        os.chdir(self.olddir)
+
+    def check_consistency(self, rule):
+        """
+        Check consistency of initial data, MMFF optimized data, and QM optimized data. 
+        Remove structures which are not consistent based on rule
+        :param rule: "strict" or "loose"
+        """
+        data = pd.read_csv(os.path.join(self.outdir, "initial_dataset.csv"), sep=" ")
+        if rule == "strict":
+            data = data[(data["initial_SMILES"] == data["MMFF_SMILES"]) & (data["MMFF_SMILES"] == data["QM_SMILES"])]
+            data.to_csv(os.path.join(self.outdir, "data_consistent_strict.csv"), index = False)
+        elif rule == "loose":
+            data_initial = data[(data["initial_SMILES"] == data["MMFF_SMILES"]) | (data["initial_InChI"] == data["MMFF_InChI"])]
+            data = data_initial[(data_initial["MMFF_SMILES"] == data["QM_SMILES"]) | (data["MMFF_InChI"] == data["QM_InChI"])]
+            data.to_csv(os.path.join(self.outdir, "data_consistent_loose.csv"), index = False)
+
+    def check_others(self, infile):
+        """
+        Check radicals and partial charges, MMFF_SMILES is used to check
+        :param infile: data index file
+        """
+        update_list = []
+        os.chdir(self.datadir)
+        data = pd.read_csv(os.path.join(self.outdir, infile))
+        index_list = list(data["index"])
+        for i in index_list:
+            mol = Chem.SDMolSupplier(str(i) + self.suffix)[0]
+            if Descriptors.NumRadicalElectrons(mol) == 0:
+                if len([atom for atom in mol.GetAtoms() if atom.GetFormalCharge() != 0]) == 0:
+                    update_list.append(i)
+        data = data[data["index"].isin(update_list)]
+        data.to_csv(os.path.join(self.outdir, infile.split(".")[0] + "_rmrpc.csv"), index = False)
+        os.chdir(self.olddir)
+
 
     
