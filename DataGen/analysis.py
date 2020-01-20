@@ -145,7 +145,7 @@ class check:
             data.to_csv(os.path.join(self.outdir, "data_consistent_strict.csv"), index = False)
         elif rule == "loose":
             data_initial = data[(data["initial_SMILES"] == data["MMFF_SMILES"]) | (data["initial_InChI"] == data["MMFF_InChI"])]
-            data = data_initial[(data_initial["MMFF_SMILES"] == data["QM_SMILES"]) | (data["MMFF_InChI"] == data["QM_InChI"])]
+            data = data_initial[(data_initial["MMFF_SMILES"] == data["QM_SMILES"]) | (data_initial["MMFF_InChI"] == data["QM_InChI"])]
             data.to_csv(os.path.join(self.outdir, "data_consistent_loose.csv"), index = False)
 
     def check_others(self, infile):
