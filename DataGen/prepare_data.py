@@ -299,7 +299,7 @@ class data_infor:
         self._dipole = dipole  
     
             
-def prepre_PhysNet_input(index_list, output, datadir, reference, ftype="confs", largest_num_atoms=29):
+def prepare_PhysNet_input(index_list, output, datadir, reference, ftype="confs", largest_num_atoms=29):
     """
     Generate standard PhysNet input numpy file 
     
