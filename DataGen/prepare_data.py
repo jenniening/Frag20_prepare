@@ -274,12 +274,13 @@ class data_infor:
         """ Get Mulliken charges """
         index = [ idx for idx, line in enumerate(self._loglines) if line.startswith(" Mulliken charges:")][0] + 2
         natoms_old = self.natoms
+        natoms = self.natoms
         try: 
             charges = [float(line.split()[-1]) for line in self._loglines[index: index + natoms]]
         except:
             charges = []
             for idx, line in enumerate(self._loglines[index:]):
-                if idx < self._natoms:
+                if idx < natoms:
                     ### remove calculation comments in Mulliken charges part ###
                     try: 
                         charge = float(line.split()[-1])
