@@ -1,6 +1,6 @@
 import os
 
-def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem=10):
+def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem=5, cpu=1):
     """
     Generate jobs that can be submitted in HPC
     index_list: the list includes all indexes that we want to calculate
@@ -14,7 +14,7 @@ def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem
     """
     for n in range(int(len(index_list[current_jobs:])/num_jobs) + 1):
         job = open(os.path.join(jobdir,"job_" + str(n) + ".pbs"), "w")
-        job.write("#!/bin/bash\n#\n#SBATCH --job-name=G_" + str(n) + "\n#SBATCH --nodes=1\n#SBATCH --cpus-per-task=1\n#SBATCH --time=" + str(time) + ":00:00\n#SBATCH --mem=" + str(mem) + "GB\n\nmodule purge\nmodule load gaussian/intel/g09e01\n\n")
+        job.write("#!/bin/bash\n#\n#SBATCH --job-name=G_" + str(n) + "\n#SBATCH --nodes=1\n#SBATCH --cpus-per-task=" + str(cpu) + "\n#SBATCH --time=" + str(time) + ":00:00\n#SBATCH --mem=" + str(mem) + "GB\n\nmodule purge\nmodule load gaussian/intel/g09e01\n\n")
         for i in range(num_jobs):
             i = n * num_jobs + i + current_jobs
             if i < len(index_list):
