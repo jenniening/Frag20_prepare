@@ -300,7 +300,7 @@ class data_infor:
         self._dipole = dipole  
     
             
-def prepare_PhysNet_input(index_list, output, datadir, reference, ftype="confs", largest_num_atoms=29):
+def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", ftype="confs", largest_num_atoms=29):
     """
     Generate standard PhysNet input numpy file 
     
@@ -308,6 +308,7 @@ def prepare_PhysNet_input(index_list, output, datadir, reference, ftype="confs",
     :param output: output name for the numpy file
     :param datadir: directory for all sdf and log files
     :param reference: atomic reference energies for QM method, which is used to get the atomization energies
+    :param method: if use QM geometries, method = "QM"; use MMFF geometries, method = "MMFF"
     :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
     :param largest_num_atoms: the largest number of atoms of dataset, defaults to 29(QM9), should be got before the data prepartion.
     notice: this is for neutral, equilibrium molecules (at local minimization point).
@@ -319,7 +320,10 @@ def prepare_PhysNet_input(index_list, output, datadir, reference, ftype="confs",
         total_charge = 0
         tmp_data = data_infor(i, datadir, reference, ftype)
         num_atoms = tmp_data.natoms
-        coords_new = tmp_data.QMcoords
+        if method == "QM":
+            coords_new = tmp_data.QMcoords
+        else:
+            coords_new = tmp_data.MMFFcoords
         coords[0:num_atoms] = coords_new
         dipole = tmp_data.dipole
         atoms_new = tmp_data.elements
