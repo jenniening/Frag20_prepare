@@ -8,7 +8,7 @@ import os
 
 
 class data_infor:
-    def __init__(self, index, datadir, reference, ftype="confs"):
+    def __init__(self, index, datadir, reference, ftype="confs", qmtype=None):
         """
         Use to get information we need for each molecule
         
@@ -16,14 +16,19 @@ class data_infor:
         :param datadir: the directory for all structure file and property file
         :param reference: atomic reference energy for QM method
         :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+        :param qmtype: specific qm file prefix, defaults to None, means qm files should be index.opt.log and index.opt.sdf
 
         """
         self._datadir = datadir
         self._index = index
         self._reference = np.load(reference)["atom_ref"]
         ### log file is the Gaussin output file ###
-        self._log = os.path.join(self._datadir, index + ".opt.log")
-        self._QMsdf = os.path.join(self._datadir, index + ".opt.sdf")
+        if qmtype:
+            self._log = os.path.join(self._datadir, index + qmtype + ".log")
+            self._QMsdf = os.path.join(self._datadir, index + qmtype + ".sdf")
+        else:
+            self._log = os.path.join(self._datadir, index + ".opt.log")
+            self._QMsdf = os.path.join(self._datadir, index + ".opt.sdf")
         if ftype == "cry":
             self._MMFFsdf = os.path.join(self._datadir, index + "_min.sdf")
         else:
@@ -300,7 +305,7 @@ class data_infor:
         self._dipole = dipole  
     
             
-def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", ftype="confs", largest_num_atoms=29):
+def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", ftype="confs", largest_num_atoms=29, qmtype=None):
     """
     Generate standard PhysNet input numpy file 
     
@@ -318,7 +323,7 @@ def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", f
         coords = [[0.0,0.0,0.0] for i in range(largest_num_atoms)]
         atoms = [0 for i in range(largest_num_atoms)]
         total_charge = 0
-        tmp_data = data_infor(i, datadir, reference, ftype)
+        tmp_data = data_infor(i, datadir, reference, ftype, qmtype)
         num_atoms = tmp_data.natoms
         if method == "QM":
             coords_new = tmp_data.QMcoords
@@ -343,7 +348,7 @@ def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", f
 
     np.savez(output, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
 
-def prepare_torch(index_list, output, datadir, reference, ftype="confs", method="QM"):
+def prepare_torch(index_list, output, datadir, reference, ftype="confs", method="QM", qmtype=None):
     """
     Save rdkit mols into torch file
     
@@ -357,7 +362,7 @@ def prepare_torch(index_list, output, datadir, reference, ftype="confs", method=
     """
     sdflist = []
     for idx, i in enumerate(index_list):
-        tmp_data = data_infor(i, datadir, reference, ftype)
+        tmp_data = data_infor(i, datadir, reference, ftype, qmtype)
         if method == "QM":
             sdflist.append(tmp_data.QMmol)
         else:
@@ -366,7 +371,7 @@ def prepare_torch(index_list, output, datadir, reference, ftype="confs", method=
             print("Finish ", idx)
     torch.save(sdflist, output)
 
-def prepare_target_csv(index_list, output, datadir, reference, ftype="confs",):
+def prepare_target_csv(index_list, output, datadir, reference, ftype="confs", qmtype=None):
     """
     Save targets into csv file
     
@@ -381,7 +386,7 @@ def prepare_target_csv(index_list, output, datadir, reference, ftype="confs",):
     header = ['index','A', 'B', 'C', 'mu', 'alpha', 'ehomo', 'elumo', 'egap', 'R2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'E', 'U0_atom', "U_atom", "H_atom", "G_atom"]
     out.write(",".join(header) + "\n")
     for idx, i in enumerate(index_list):
-        tmp_data = data_infor(i, datadir, reference, ftype)
+        tmp_data = data_infor(i, datadir, reference, ftype, qmtype)
         out.write(str(i) + "," + ",".join([str(i) for i in tmp_data.target]) + "\n")
         if idx % 10000 == 0 and idx != 0:
             print("Finish ", idx) 
