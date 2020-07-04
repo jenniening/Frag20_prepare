@@ -16,7 +16,7 @@ conda install -c rdkit rdkit
 ```
 
 Pytorch (used to save data) <br>
-Install follow the [ink](https://pytorch.org/?utm_source=Google&utm_medium=PaidSearch&utm_campaign=%2A%2ALP+-+TM+-+General+-+HV+-+US&utm_adgroup=Install+PyTorch&utm_keyword=install%20pytorch&utm_offering=AI&utm_Product=PyTorch&gclid=EAIaIQobChMIoJbb_Nmy6gIViorICh0PigPMEAAYASAAEgLgy_D_BwE) <br>
+Install follow the [link](https://pytorch.org/?utm_source=Google&utm_medium=PaidSearch&utm_campaign=%2A%2ALP+-+TM+-+General+-+HV+-+US&utm_adgroup=Install+PyTorch&utm_keyword=install%20pytorch&utm_offering=AI&utm_Product=PyTorch&gclid=EAIaIQobChMIoJbb_Nmy6gIViorICh0PigPMEAAYASAAEgLgy_D_BwE) <br>
 Ase (used to convert unit) <br> 
 ```
 conda install -c conda-forge ase
