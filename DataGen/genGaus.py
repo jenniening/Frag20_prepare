@@ -1,13 +1,17 @@
 import os
 
 def file_seperate(infile_list, datadir, outdir, initial_index=0):
-    """ 
-    Seperate conformations in *_confs.sdf 
-    infile_list: a list of file name
-    datadir: directory for input files
-    outdir: directory for output seperate files
-    initial_index: seperated files will be named as initial_index + number of conformations have been seperated . sdf
-    return: seperated conformation files have been saved in outdir; return the (initial_index + the number of conformations have been seperated)
+    """ Seperate conformations in *_confs.sdf 
+
+    Args:
+        infile_list: a list of file name
+        datadir: directory for input files
+        outdir: directory for output seperate files
+        initial_index: seperated files will be named as initial_index + number of conformations have been seperated . sdf
+    
+    Returns:
+        seperated conformation files have been saved in outdir; 
+        return the (initial_index + the number of conformations have been seperated)
     """
     i = initial_index
     for name in infile_list:
@@ -26,12 +30,13 @@ def file_seperate(infile_list, datadir, outdir, initial_index=0):
     return i
     
 def file_transfer(index_list, ftype, datadir):
-    """ 
-    Convert file into .com file using obabel 
-    index_list: the list of all file name index that are needed to be converted 
-    ftype: if cry --> local minimization, if others --> conformations
-    datadir: the direcory for the sdf file, and all converted file will be in same directory
-    notice: don't convert too many sdf files at the same time, it might cause problem of your computer
+    """ Convert file into .com file using obabel 
+
+    Args:
+        index_list: the list of all file name index that are needed to be converted 
+        ftype: if cry --> local minimization, if others --> conformations
+        datadir: the direcory for the sdf file, and all converted file will be in same directory
+        notice: don't convert too many sdf files at the same time, it might cause problem of your computer
     """
     for i in index_list:
         if ftype == "cry":
@@ -43,9 +48,10 @@ def file_transfer(index_list, ftype, datadir):
         os.system(cmd)
 
 def gaussian_gen(index_list, header_file, datadir):
-    """ 
-    Add header for guassian optimization  
-    header_file: the file with Gaussian calculation header information
+    """ Add header for guassian optimization  
+
+    Args:
+        header_file: the file with Gaussian calculation header information
     """
     header = header_file
     for i in index_list:

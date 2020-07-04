@@ -1,0 +1,4 @@
+idx,SMILES,core_list,side_list
+1,c1ccccc1C(=O)OCC,c1ccccc1,['CCOC=O']
+2,C1N2C3CC4CC2C13C4,C1C2CC3N4CC3(C2)C14,['']
+3,CN1CC1(C)C(F)(F)F,C1CN1,"['C', 'C', 'FC(F)F']"

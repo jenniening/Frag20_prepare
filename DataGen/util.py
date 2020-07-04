@@ -5,6 +5,8 @@ import os
 
 def get_RMSD(prob, ref):
     ''' Get the RMSD between local minimum and global minimum 
+
+    Args:
         prob:conformations
         ref: crystal or reference structure
     '''

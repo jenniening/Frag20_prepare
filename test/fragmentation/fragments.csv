@@ -1,0 +1,7 @@
+mol_id,frags_id,frags_SMILES
+1,0,CCOC=O
+1,1,c1ccccc1
+2,2,C1C2CC3N4CC3(C2)C14
+3,3,C1CN1
+3,4,C
+3,5,FC(F)F

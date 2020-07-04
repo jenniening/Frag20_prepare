@@ -88,18 +88,21 @@ def calc_energy(idx, mol, conformerId, method, minimizeIts=0):
     return results
     
 def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_dir=None, numConfs=300, clusterMethod="RMSD", clusterThreshold=0.2):
-    """
-    Generate conformation as sdf for all smiles in input
-    index_list: the list of initial indexes from source data 
-    smiles_list: the rdkit smiles generated using initial source data SMILES
-    source_data_name: the source data name, such as ccdc, zinc, and pubchem, which is used to record the initial index in that source data
-    datadir: directory for outputfile
-    structure_dir: the directory used to find the 3D structure file, if it is None, the numConfs should not be None
-    numConfs: the number of conformations generated before clustering, defaults to 300; if numConfs=None, we conducted local MMFF minimization for structure
-    clusterMethod: the distance calculation method used in clustering, defaults to RMSD
-    clusterThreshold: the clustering threshold, defaults to 0.2
-    notice: we only conducted one conformation generation for each SMILES, but when numConfs=None, we conducted local optimization for each structure
-    return:saved *_confs.sdf for conformation generation or *_min.sdf for local minimization with MMFF; Failed_list
+    """Generate conformation as sdf for all smiles in input
+
+    Args:
+        index_list: the list of initial indexes from source data 
+        smiles_list: the rdkit smiles generated using initial source data SMILES
+        source_data_name: the source data name, such as ccdc, zinc, and pubchem, which is used to record the initial index in that source data
+        datadir: directory for outputfile
+        structure_dir: the directory used to find the 3D structure file, if it is None, the numConfs should not be None
+        numConfs: the number of conformations generated before clustering, defaults to 300; if numConfs=None, we conducted local MMFF minimization for structure
+        clusterMethod: the distance calculation method used in clustering, defaults to RMSD
+        clusterThreshold: the clustering threshold, defaults to 0.2
+        notice: we only conducted one conformation generation for each SMILES, but when numConfs=None, we conducted local optimization for each structure
+    
+    Returns:
+        saved *_confs.sdf for conformation generation or *_min.sdf for local minimization with MMFF; Failed_list
     """
     Failed_list = []
     Used_smiles_list = []
@@ -205,10 +208,11 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
     return Failed_list
 
 def get_index(infile,smiles_name,index_name):
-    """ 
-    Get index and SMILES list 
-    smiles_name: column name of SMILES
-    index_name: column name of index
+    """Get index and SMILES list 
+
+    Args:
+        smiles_name: column name of SMILES
+        index_name: column name of index
     """
     infile = pd.read_csv(infile)
     smiles = infile[smiles_name].tolist()

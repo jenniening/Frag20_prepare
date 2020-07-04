@@ -9,14 +9,14 @@ import os
 
 class data_infor:
     def __init__(self, index, datadir, reference, ftype="confs", qmtype=None):
-        """
-        Use to get information we need for each molecule
-        
-        :param index: the index of current structure
-        :param datadir: the directory for all structure file and property file
-        :param reference: atomic reference energy for QM method
-        :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
-        :param qmtype: specific qm file prefix, defaults to None, means qm files should be index.opt.log and index.opt.sdf
+        """Use to get information we need for each molecule
+
+        Args:
+            index: the index of current structure
+            datadir: the directory for all structure file and property file
+            reference: atomic reference energy for QM method
+            ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+            qmtype: specific qm file prefix, defaults to None, means qm files should be index.opt.log and index.opt.sdf
 
         """
         self._datadir = datadir
@@ -306,17 +306,17 @@ class data_infor:
     
             
 def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", ftype="confs", largest_num_atoms=29, qmtype=None):
-    """
-    Generate standard PhysNet input numpy file 
-    
-    :param index_list: the list for all input indexes
-    :param output: output name for the numpy file
-    :param datadir: directory for all sdf and log files
-    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
-    :param method: if use QM geometries, method = "QM"; use MMFF geometries, method = "MMFF"
-    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
-    :param largest_num_atoms: the largest number of atoms of dataset, defaults to 29(QM9), should be got before the data prepartion.
-    notice: this is for neutral, equilibrium molecules (at local minimization point).
+    """Generate standard PhysNet input numpy file 
+
+    Args:
+        index_list: the list for all input indexes
+        output: output name for the numpy file
+        datadir: directory for all sdf and log files
+        reference: atomic reference energies for QM method, which is used to get the atomization energies
+        method: if use QM geometries, method = "QM"; use MMFF geometries, method = "MMFF"
+        ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+        largest_num_atoms: the largest number of atoms of dataset, defaults to 29(QM9), should be got before the data prepartion.
+        notice: this is for neutral, equilibrium molecules (at local minimization point).
     """
     R_list,Q_list,D_list,E_list,F_list,Z_list,N_list = [], [], [], [], [], [], []
     for idx, i in enumerate(index_list):
@@ -349,15 +349,15 @@ def prepare_PhysNet_input(index_list, output, datadir, reference, method="QM", f
     np.savez(output, R=R_list, Q=Q_list, D=D_list, E=E_list, F=F_list, Z=Z_list, N=N_list)
 
 def prepare_torch(index_list, output, datadir, reference, ftype="confs", method="QM", qmtype=None):
-    """
-    Save rdkit mols into torch file
+    """Save rdkit mols into torch file
     
-    :param index_list: the list for all input indexes
-    :param output: output name for the numpy file
-    :param datadir: directory for all sdf and log files
-    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
-    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
-    :param method: optimization method, defaults to "QM"
+    Args:
+        index_list: the list for all input indexes
+        output: output name for the numpy file
+        datadir: directory for all sdf and log files
+        reference: atomic reference energies for QM method, which is used to get the atomization energies
+        ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+        method: optimization method, defaults to "QM"
 
     """
     sdflist = []
@@ -372,14 +372,14 @@ def prepare_torch(index_list, output, datadir, reference, ftype="confs", method=
     torch.save(sdflist, output)
 
 def prepare_target_csv(index_list, output, datadir, reference, ftype="confs", qmtype=None):
-    """
-    Save targets into csv file
-    
-    :param index_list: the list for all input indexes
-    :param output: output name for the numpy file
-    :param datadir: directory for all sdf and log files
-    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
-    :param ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
+    """Save targets into csv file
+
+    Args:
+        index_list: the list for all input indexes
+        output: output name for the numpy file
+        datadir: directory for all sdf and log files
+        reference: atomic reference energies for QM method, which is used to get the atomization energies
+        ftype: if local minimization, should be "cry", else, should be "confs", defaults to "confs"
 
     """
     out = open(output, "w")

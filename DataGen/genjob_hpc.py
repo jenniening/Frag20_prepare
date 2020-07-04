@@ -1,16 +1,17 @@
 import os
 
 def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem=5, cpu=1):
-    """
-    Generate jobs that can be submitted in HPC
-    index_list: the list includes all indexes that we want to calculate
-    current_jobs: the number of jobs that already be generated
-    jobdir: the directory for saving job file
-    datadir: the directory for the Gaussian input file and output file
-    num_jobs: how many calculations that one job file includes, defaults to 10
-    time: require hours from HPC for each job, defaults to 5
-    mem: require memory from HPC for each job, defaults to 10
-    notice: for large molecules, it shoule be better to contain only one caculation in each job, but for small molecules, contain more than one calculation in each job may be more efficient. Small time and mem can make it easier to get node to run the job. 
+    """Generate jobs that can be submitted in HPC
+
+    Args:
+        index_list: the list includes all indexes that we want to calculate
+        current_jobs: the number of jobs that already be generated
+        jobdir: the directory for saving job file
+        datadir: the directory for the Gaussian input file and output file
+        num_jobs: how many calculations that one job file includes, defaults to 10
+        time: require hours from HPC for each job, defaults to 5
+        mem: require memory from HPC for each job, defaults to 10
+        notice: for large molecules, it shoule be better to contain only one caculation in each job, but for small molecules, contain more than one calculation in each job may be more efficient. Small time and mem can make it easier to get node to run the job. 
     """
     for n in range(int(len(index_list[current_jobs:])/num_jobs) + 1):
         job = open(os.path.join(jobdir,"job_" + str(n) + ".pbs"), "w")
@@ -26,9 +27,10 @@ def gen_job(index_list, current_jobs, jobdir, datadir,  num_jobs=10, time=5, mem
 
 
 def sub_job(job_list, id1, id2, jobdir):
-    """
-    Submit job 
-    job_list: the list of jobs, this can be same as index_list when num_jobs=1, or can be a list of continous numbers 
+    """Submit job 
+
+    Args:
+        job_list: the list of jobs, this can be same as index_list when num_jobs=1, or can be a list of continous numbers 
     """
     olddir = os.getcwd()
     os.chdir(jobdir)
