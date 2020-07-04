@@ -1,8 +1,11 @@
 # Frag20_prepare
-This is a package for data generation including useful functions for molecule fragmentation, molecule selection, 1D to 3D labelling: conformation generation, file conversion, MMFF and QM calculation, and dataset preparation
+This is a package for data generation including useful functions for **molecule fragmentation**, **molecule selection**, **1D to 3D labelling**: conformation generation, file conversion, MMFF and QM calculation, and **dataset preparation**
 
 ### Packges 
 Openbabel (used to convert file into different format)<br>
+'''
+conda install -c openbabel openbabel
+'''
 RDkit (used to generate conformations)<br>
 Pytorch (used to save data) <br>
 Numpy (used to save data) <br>
