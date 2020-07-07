@@ -15,9 +15,12 @@ from DataGen.analysis import check
 from DataGen.prepare_data import prepare_torch, prepare_PhysNet_input, prepare_target_csv
 from rdkit import Chem
 
-"""
-Wraps of method for easier implementation
-"""
+
+def gen_header_text(n_cpu, mem, method='B3LYP/6-31G*', path='header.txt'):
+    header = "%NProcShared={}\n%Mem={}GB\n\n#p {} opt freq\n\ntest\n".format(n_cpu, mem, method)
+    with open(path, 'w') as f:
+        f.write(header)
+    return
 
 
 def logger_setup(directory, logger_name):
@@ -63,13 +66,16 @@ def gen_conf(smiles_csv_file, source_data_name, out_dir, record_dir, num_conf=30
     torch.save(failed_list, osp.join(record_dir, 'genConf_failed_ids.pt'))
 
 
-def gen_gaussian_input(input_dir, out_dir, record_dir, initial_index=0):
+def gen_gaussian_input(input_dir, out_dir, record_dir, initial_index=0, n_cpu=1, mem=2, method='B3LYP/6-31G*'):
     """
     This function generate Gaussian input
     :param input_dir: directory containing generated conformation
     :param out_dir: directory for generated Gaussian input
     :param record_dir: directory for log files
     :param initial_index: generated input will be named $(n).opt.com starting from $(initial_index+1).opt.log
+    :param n_cpu:
+    :param mem:
+    :param method:
     :return:
     """
     if not osp.exists(out_dir):
@@ -93,6 +99,7 @@ def gen_gaussian_input(input_dir, out_dir, record_dir, initial_index=0):
 
     logger.info('generating Gaussian input files...')
     header_file = osp.join(record_dir, 'header.txt')
+    gen_header_text(n_cpu, mem, method, header_file)
     gaussian_gen(conf_index, header_file, out_dir)
     logger.info('Gaussian files generation complete.')
 
@@ -209,3 +216,4 @@ if __name__ == '__main__':
     # gen_gaussian_input('conformations', 'ginput', 'record')
     # gen_slurm_jobs('gjobs', 'ginput', 2, 5, 10, 1)
     prepare_dataset('ginput', '../../output', 'record', 'atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
+    # gen_header_text(1, 2, path='../header.txt')
