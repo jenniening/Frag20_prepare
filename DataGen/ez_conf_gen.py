@@ -132,17 +132,16 @@ def gen_slurm_jobs(job_dir, target_dir, num_jobs, time, mem, n_cpu):
     gen_job(index_list, 0, job_dir, target_dir, num_jobs, time, mem, n_cpu)
 
 
-def prepare_dataset(data_dir, output_dir, record_dir, reference_name, file_name='data'):
+def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data'):
     """
     remove Gaussian errors, performing post analysis and prepare dataset(PhysNet, target and mol files)
     :param data_dir: directory containing all Gaussian input and output
     :param output_dir:
     :param record_dir:
-    :param reference_name: atomic reference energies for QM method, which is used to get the atomization energies
+    :param reference: atomic reference energies for QM method, which is used to get the atomization energies
     :param file_name: name which will be part of prepared files
     :return:
     """
-    reference = osp.join(record_dir, reference_name)
     if not osp.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -154,7 +153,7 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference_name, file_name=
     shutil.move(osp.join(data_dir, 'Gaussian_error.csv'),
                 osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name)))
     gaussian_error_list = []
-    with open(osp.join(record_dir, 'Gaussian_error.csv')) as f:
+    with open(osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name))) as f:
         for line in f.readlines():
             gaussian_error_list.append(int(line.strip()))
 
@@ -207,6 +206,18 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference_name, file_name=
         prepare_PhysNet_input(index_list, osp.join(output_dir, '{}_{}_PhysNet'.format(file_name, method))
                               , data_dir, reference, method=method, ftype='conf', largest_num_atoms=largest_num_atoms)
     prepare_target_csv(index_list, osp.join(output_dir, 'target.csv'), data_dir, reference, 'conf')
+
+    '''
+    change names
+    '''
+    shutil.move(osp.join(output_dir, 'data_consistent_strict.csv'),
+                osp.join(output_dir, '{}_consistent_strict.csv'.format(file_name)))
+    shutil.move(osp.join(output_dir, 'data_consistent_strict_rmrpc.csv'),
+                osp.join(output_dir, '{}_consistent_strict_rmrpc.csv'.format(file_name)))
+    shutil.move(osp.join(output_dir, 'initial_dataset.csv'),
+                osp.join(output_dir, '{}_initial_dataset.csv'.format(file_name)))
+    shutil.move(osp.join(output_dir, 'target.csv'),
+                osp.join(output_dir, '{}_target.csv'.format(file_name)))
     return
 
 
@@ -215,5 +226,4 @@ if __name__ == '__main__':
     #          num_conf=10, debug_mode=True)
     # gen_gaussian_input('conformations', 'ginput', 'record')
     # gen_slurm_jobs('gjobs', 'ginput', 2, 5, 10, 1)
-    prepare_dataset('ginput', '../../output', 'record', 'atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
-    # gen_header_text(1, 2, path='../header.txt')
+    prepare_dataset('ginput', 'output', 'record', 'input/atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
