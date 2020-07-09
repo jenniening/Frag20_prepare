@@ -1,10 +1,12 @@
 import shutil
+from datetime import datetime
 
 import DataGen
 import pandas as pd
 import logging
 import os
 import os.path as osp
+import numpy as np
 import torch
 import glob
 
@@ -221,9 +223,68 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     return
 
 
+def tar_folder(source, destination):
+    """
+    Wrapper function adapted from:
+    https://stackoverflow.com/questions/32640053/compressing-directory-using-shutil-make-archive-while-preserving-directory-str
+
+    :param destination:
+    :param source:
+
+    Returns:
+
+    """
+    base = osp.basename(destination)
+    name = base.split('.')[0]
+    format_ = base.split('.')[1]
+    archive_from = osp.dirname(source)
+    archive_to = osp.basename(source.strip(os.sep))
+    shutil.make_archive(name, format_, archive_from, archive_to)
+
+    current_time = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    destination = "{}_backup_{}.{}".format(name, current_time, format_)
+    shutil.move('%s.%s' % (name, format_), destination)
+    return
+
+
+def untar(file_name):
+    shutil.unpack_archive(file_name)
+
+
+def concat_dataset(file_list, destination):
+    format_ = file_list[0].split('.')[-1]
+    if format_ == 'pt':
+        files = [torch.load(file) for file in file_list]
+        result = []
+        for data in files:
+            result.extend(data)
+        torch.save(result, destination)
+    elif format_ == 'csv':
+        files = [pd.read_csv(file) for file in file_list]
+        concat = pd.concat(files, ignore_index=True)
+        concat.to_csv(destination, index=False)
+    elif format_ == 'npz':
+        files = [np.load(file, allow_pickle=True) for file in file_list]
+        keys = files[0].files
+        result = {
+            key: [data[key] for data in files]
+            for key in keys
+        }
+        result = {
+            key: np.concatenate(result[key])
+            for key in result.keys()
+        }
+        np.savez(destination, **result)
+    else:
+        raise ValueError('Format not supported: *.{}'.format(format_))
+
+
 if __name__ == '__main__':
     # gen_conf('input/Index_ccdc_20_overlapwithmol20_removeempty.csv', 'ccdc', 'conformations', 'record',
     #          num_conf=10, debug_mode=True)
     # gen_gaussian_input('conformations', 'ginput', 'record')
     # gen_slurm_jobs('gjobs', 'ginput', 2, 5, 10, 1)
-    prepare_dataset('ginput', 'output', 'record', 'input/atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
+    # prepare_dataset('ginput', 'output', 'record', 'input/atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
+    # tar_folder('./ginput', './ginput.tar')
+    # untar('ginput_backup_2020-07-09_125037.tar')
+    concat_dataset(glob.glob('../test/conf20_batch*_output/*QM*.npz'), '../test/conf20_concat/conf20_QM_PhysNet.npz')
