@@ -147,6 +147,7 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     if not osp.exists(output_dir):
         os.mkdir(output_dir)
 
+    logger = logger_setup(record_dir, 'genGaussian.log')
     conf_indexes = glob.glob(osp.join(data_dir, '*.opt.log'))
     for i, file in enumerate(conf_indexes):
         conf_indexes[i] = int(file.split('/')[-1].split('.')[0])
@@ -162,7 +163,8 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     '''
     Removing error files
     '''
-    removed_dir = '../../removed'
+    logger.info('removing Gaussian error files...')
+    removed_dir = './removed'
     if not osp.exists(removed_dir):
         os.mkdir(removed_dir)
     for error_id in gaussian_error_list:
@@ -176,6 +178,7 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     '''
     Post analysis
     '''
+    logger.info('performing post analysis...')
     conf_indexes = glob.glob(osp.join(data_dir, '*.opt.log'))
     for i, file in enumerate(conf_indexes):
         conf_indexes[i] = int(file.split('/')[-1].split('.')[0])
@@ -188,6 +191,7 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     '''
     Calculate max number of atoms for PhysNet dataset preparation
     '''
+    logger.info('calculating max number of atoms in the dataset...')
     checked_data = pd.read_csv(osp.join(output_dir, 'data_consistent_strict_rmrpc.csv'))
     index_list = checked_data['index'].values.tolist()
     smiles_list = checked_data['SMILES']
@@ -197,10 +201,12 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
         num_atom = mol.GetNumAtoms()
         if num_atom > largest_num_atoms:
             largest_num_atoms = num_atom
+    logger.info('max number of atoms: {}'.format(largest_num_atoms))
 
     '''
     Preparing QM and MMFF geometry dataset
     '''
+    logger.info('preparing QM and MMFF geometry dataset...')
     index_list = [str(i) for i in index_list]
     for method in ['QM', 'MMFF']:
         prepare_torch(index_list, osp.join(output_dir, '{}_{}.pt'.format(file_name, method)), data_dir, reference,
@@ -279,6 +285,38 @@ def concat_dataset(file_list, destination):
         raise ValueError('Format not supported: *.{}'.format(format_))
 
 
+def conf_dataset_analysis(folder_name):
+    """
+    Basic data analysis
+    :param folder_name:
+    :return:
+    """
+    import matplotlib.pyplot as plt
+
+    logger = logger_setup(folder_name, 'data_analysis.log')
+    index_data = pd.read_csv(osp.join(folder_name, 'data_consistent_strict_rmrpc.csv'))
+    initial_index = index_data['initial_index']
+    logger.info('Total number of conformation generated: {}'.format(len(initial_index)))
+    molecules = set(initial_index.tolist())
+    logger.info('Total number of molecules: {}'.format(len(molecules)))
+    n_conf_count = {key: 0 for key in molecules}
+    for i in initial_index.to_list():
+        n_conf_count[i] += 1
+    n_conf_mol = {key: 0 for key in set(n_conf_count.values())}
+    for key in n_conf_count:
+        n_conf_mol[n_conf_count[key]] += 1
+    n_conf = [key for key in n_conf_mol.keys()]
+    count = [n_conf_mol[key] for key in n_conf_mol.keys()]
+
+    plt.figure(figsize=(15, 10))
+    plt.scatter(n_conf, count)
+    plt.xlabel('number of generated conformations')
+    plt.ylabel('number of molecules')
+    plt.title('Distribution of generated conformations')
+    # plt.xlim([0, 50])
+    plt.savefig(osp.join(folder_name, 'config_distribution'))
+
+
 if __name__ == '__main__':
     # gen_conf('input/Index_ccdc_20_overlapwithmol20_removeempty.csv', 'ccdc', 'conformations', 'record',
     #          num_conf=10, debug_mode=True)
@@ -287,4 +325,6 @@ if __name__ == '__main__':
     # prepare_dataset('ginput', 'output', 'record', 'input/atomref.B3LYP_631Gd.10As.npz', file_name='conf20_batch1')
     # tar_folder('./ginput', './ginput.tar')
     # untar('ginput_backup_2020-07-09_125037.tar')
-    concat_dataset(glob.glob('../test/conf20_batch*_output/*QM*.npz'), '../test/conf20_concat/conf20_QM_PhysNet.npz')
+    # concat_dataset(glob.glob('conf20_batch*_output/data_consistent_strict_rmrpc.csv'),
+    #                'conf20_concat/data_consistent_strict_rmrpc.csv')
+    conf_dataset_analysis('conf20_concat')
