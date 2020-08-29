@@ -148,13 +148,20 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
         os.mkdir(output_dir)
 
     logger = logger_setup(record_dir, 'genGaussian.log')
-    conf_indexes = glob.glob(osp.join(data_dir, '*.opt.log'))
-    for i, file in enumerate(conf_indexes):
-        conf_indexes[i] = int(file.split('/')[-1].split('.')[0])
 
-    check_gaussian(conf_indexes, data_dir)
-    shutil.move(osp.join(data_dir, 'Gaussian_error.csv'),
-                osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name)))
+    if not osp.exists(osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name))):
+        logger.info('generating Gaussian error')
+        conf_indexes = glob.glob(osp.join(data_dir, '*.opt.log'))
+        for i, file in enumerate(conf_indexes):
+            conf_indexes[i] = int(file.split('/')[-1].split('.')[0])
+
+        check_gaussian(conf_indexes, data_dir)
+        shutil.move(osp.join(data_dir, 'Gaussian_error.csv'),
+                    osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name)))
+        logger.info('Gaussian error generation complete')
+    else:
+        logger.info('Found existing Gaussian error files, skipping...')
+
     gaussian_error_list = []
     with open(osp.join(record_dir, '{}_Gaussian_error.csv'.format(file_name))) as f:
         for line in f.readlines():
@@ -168,12 +175,10 @@ def prepare_dataset(data_dir, output_dir, record_dir, reference, file_name='data
     if not osp.exists(removed_dir):
         os.mkdir(removed_dir)
     for error_id in gaussian_error_list:
-        shutil.move(osp.join(data_dir, '{}.sdf'.format(error_id)), osp.join(removed_dir, '{}.sdf'.format(error_id)))
-        shutil.move(osp.join(data_dir, '{}.com'.format(error_id)), osp.join(removed_dir, '{}.com'.format(error_id)))
-        shutil.move(osp.join(data_dir, '{}.opt.com'.format(error_id)),
-                    osp.join(removed_dir, '{}.opt.com'.format(error_id)))
-        shutil.move(osp.join(data_dir, '{}.opt.log'.format(error_id)),
-                    osp.join(removed_dir, '{}.opt.log'.format(error_id)))
+        for template in ["{}.sdf", "{}.com", "{}.opt.com", "{}.opt.log"]:
+            if osp.exists(osp.join(data_dir, template.format(error_id))):
+                shutil.move(osp.join(data_dir, template.format(error_id)), osp.join(removed_dir, template.format(error_id)))
+    logger.info('removing complete')
 
     '''
     Post analysis
