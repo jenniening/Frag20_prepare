@@ -23,7 +23,18 @@ conda install -c conda-forge ase
 ```
 
 EFGs (used to generated extend functional groups, developed by Jieyu Lu) <br>
-Please check the link for detailed information: https://github.com/HelloJocelynLu/EFGs
+You can ether install using pip:
+```
+pip install EFGs
+```
+or install from source (with latest version):
+```
+git clone https://github.com/HelloJocelynLu/EFGs.git
+cd EFGs/
+python setup.py install
+python setup.py test # optional
+```
+Please check the link for more detailed information: https://github.com/HelloJocelynLu/EFGs
 
 ### Setup
 Install our DataGen package
