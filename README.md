@@ -22,7 +22,10 @@ Ase (used to convert unit) <br>
 conda install -c conda-forge ase
 ```
 
-EFGs (used to generate EFG lib, which is not avalible now. If interested, please contact [Jieyu Lu](jl8570@nyu.edu)<br>
+EFGs<br>
+
+This is a package developed by Jieyu Lu, please check the below link for detailed information:<br>
+https://github.com/HelloJocelynLu/EFGs
 
 ### Setup
 Install our DataGen package
