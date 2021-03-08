@@ -22,7 +22,7 @@ Ase (used to convert unit) <br>
 conda install -c conda-forge ase
 ```
 
-EFGs (used to generated extend functional groups, developed by Jieyu Lu)<br>
+EFGs (used to generated extend functional groups, developed by Jieyu Lu)
 
 Please check the link for detailed information: https://github.com/HelloJocelynLu/EFGs
 
