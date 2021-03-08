@@ -23,7 +23,6 @@ conda install -c conda-forge ase
 ```
 
 EFGs (used to generated extend functional groups, developed by Jieyu Lu)
-
 Please check the link for detailed information: https://github.com/HelloJocelynLu/EFGs
 
 ### Setup
