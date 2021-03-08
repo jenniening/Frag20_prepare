@@ -35,3 +35,9 @@ python setup.py install
 This is tutorial for basic functions we used to cut molecules into fragments, generate EFGs, and select molecules.
 #### 2. [1D to 3D labelling and dataset prepartion](http://htmlpreview.github.io/?https://github.com/jenniening/Frag20_prepare/blob/master/tutorials/1D_to_3D_tutorial.html)
 This tutorial includes all steps in 1D to 3D labelling and also the functions used for prepare input dataset for PhysNet model.
+
+### Reference
+Jianing Lu, Song Xia, Jieyu Lu and Yingkai Zhang. *J. Chem. Inf. Model., **61**. (2021)
+https://pubs.acs.org/doi/10.1021/acs.jcim.1c00007
+
+
