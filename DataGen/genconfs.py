@@ -112,8 +112,8 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
     """
     Failed_list = []
     Used_smiles_list = []
-    for idx, smiles in tqdm(enumerate(smiles_list)):
-        print(idx, smiles)
+    for idx, smiles in enumerate(tqdm(smiles_list)):
+        # print(idx, smiles)
 
         if numConfs:
             ### check SMILES to make sure only conduct one time conformation generation for each SMILES ###
