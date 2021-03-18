@@ -4,29 +4,32 @@ from rdkit.Chem import AllChem, TorsionFingerprints
 from rdkit.ML.Cluster import Butina
 from rdkit.Chem import PandasTools
 import pandas as pd
+from tqdm import tqdm
+
 
 def gen_conformers(mol, numConfs=1):
     """Generate conformation with local minimization"""
-    
+
     ### generate conf using ETKDG method ###
     ps = AllChem.ETKDG()
     ps.maxAttempts = 1000
     ps.randomSeed = 1
     ps.pruneRmsThresh = 0.1
-    ps.numThreads = 0 
+    ps.numThreads = 0
     ids = AllChem.EmbedMultipleConfs(mol, numConfs, ps)
     ### Check MMFF parms ###
     if AllChem.MMFFHasAllMoleculeParams(mol):
         ### MMFF optimize ###
         method = "MMFF"
         for cid in ids:
-            _ = AllChem.MMFFOptimizeMolecule(mol, confId = cid)
+            _ = AllChem.MMFFOptimizeMolecule(mol, confId=cid)
     else:
         ### UFF optimize ###
         method = "UFF"
         for cid in ids:
-            _ = AllChem.UFFOptimizeMolecule(mol, confId = cid)
+            _ = AllChem.UFFOptimizeMolecule(mol, confId=cid)
     return list(ids), method
+
 
 def cluster_conformers(mol, mode="RMSD", threshold=0.2):
     """
@@ -44,11 +47,12 @@ def cluster_conformers(mol, mode="RMSD", threshold=0.2):
     dmat = []
     for i in range(n):
         for j in range(i):
-            dmat.append(Chem.rdMolAlign.AlignMol(mol, mol, i, j, atomMap = [(k, k) for k in heavyatomidx]))
+            dmat.append(Chem.rdMolAlign.AlignMol(mol, mol, i, j, atomMap=[(k, k) for k in heavyatomidx]))
     ### clustering ###
     rms_clusters = Butina.ClusterData(dmat, mol.GetNumConformers(), threshold, isDistData=True, reordering=True)
-    
+
     return rms_clusters
+
 
 def calc_energy(idx, mol, conformerId, method, minimizeIts=0):
     """
@@ -84,10 +88,12 @@ def calc_energy(idx, mol, conformerId, method, minimizeIts=0):
             ### for some molecules, such as HF, they can't be minimized ###
             results = {}
             results["energy_abs"] = None
-        
+
     return results
-    
-def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_dir=None, numConfs=300, clusterMethod="RMSD", clusterThreshold=0.2):
+
+
+def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_dir=None, numConfs=300,
+                 clusterMethod="RMSD", clusterThreshold=0.2):
     """Generate conformation as sdf for all smiles in input
 
     Args:
@@ -106,18 +112,18 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
     """
     Failed_list = []
     Used_smiles_list = []
-    for idx, smiles in enumerate(smiles_list):
+    for idx, smiles in tqdm(enumerate(smiles_list)):
         print(idx, smiles)
-       
+
         if numConfs:
             ### check SMILES to make sure only conduct one time conformation generation for each SMILES ###
             if smiles in Used_smiles_list:
                 continue
-        
+
         if structure_dir:
-            if str(index_list[idx])  + ".sdf" in os.listdir(structure_dir):
-                print("Use 3D Structure as Reference:", str(index_list[idx])  + ".sdf")
-                mol = Chem.SDMolSupplier(os.path.join(structure_dir, str(index_list[idx])  + ".sdf"), removeHs=False)[0]
+            if str(index_list[idx]) + ".sdf" in os.listdir(structure_dir):
+                print("Use 3D Structure as Reference:", str(index_list[idx]) + ".sdf")
+                mol = Chem.SDMolSupplier(os.path.join(structure_dir, str(index_list[idx]) + ".sdf"), removeHs=False)[0]
                 if mol == None:
                     print("Wring 3D Structure!")
                     continue
@@ -135,10 +141,10 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                 print("Wrong SMILES!")
                 continue
 
-        if mol != None: 
+        if mol != None:
             if numConfs:
                 ### generated conformations are saved in *_confors.sdf file ###
-                w = Chem.SDWriter(os.path.join(datadir,str(index_list[idx]) + "_confors.sdf"))
+                w = Chem.SDWriter(os.path.join(datadir, str(index_list[idx]) + "_confors.sdf"))
                 try:
                     conformerIds, method = gen_conformers(mol, numConfs=numConfs)
                 except:
@@ -146,14 +152,14 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                     ### situtation 1: conformation generation process is failed ### 
                     Failed_list.append(idx)
                     continue
-                
+
                 if conformerIds == []:
                     ### situation 2: no conformation has been generated ###
                     Failed_list.append(idx)
                     continue
                 ### cluster conformations ###
                 rmsClusters = cluster_conformers(mol, clusterMethod, clusterThreshold)
- 
+
                 conformerPropsDict = {}
                 n = 0
                 for clusterId in rmsClusters:
@@ -162,7 +168,8 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                     for conformerId in clusterId[:1]:
                         conformerPropsDict[conformerId] = {}
                         ### structure minimization (optional) and energy calculation ###
-                        conformerPropsDict[conformerId]["energy_abs"] = calc_energy(idx, mol, conformerId, method)["energy_abs"]
+                        conformerPropsDict[conformerId]["energy_abs"] = calc_energy(idx, mol, conformerId, method)[
+                            "energy_abs"]
                         ### situation 3: no minimized energy ###
                         if conformerPropsDict[conformerId]["energy_abs"] == None:
                             Failed_list.append(idx)
@@ -174,8 +181,8 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                         conformerPropsDict[conformerId]["minimize_method"] = method
                         for key in conformerPropsDict[conformerId].keys():
                             mol.SetProp(key, str(conformerPropsDict[conformerId][key]))
-                        w.write(mol, confId = conformerId)
-                print("The total number of conformers after clustring: " + str(n))
+                        w.write(mol, confId=conformerId)
+                # print("The total number of conformers after clustring: " + str(n))
                 ### only append smiles in the Used_smiles_list after the successful conformation generation ###
                 Used_smiles_list.append(smiles)
             else:
@@ -183,11 +190,12 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                 ### local minimized structure is saved in *_min.sdf ###
                 w = Chem.SDWriter(os.path.join(datadir, str(index_list[idx]) + "_min.sdf"))
                 conformerPropsDict = {}
-                conformerId = 0 
+                conformerId = 0
                 method = "MMFF"
                 conformerPropsDict[conformerId] = {}
                 ### here, we need to conduct minimization using calc_energy function, which is controled by minimizeIts=200 ###
-                conformerPropsDict[conformerId]["energy_abs"] = calc_energy(idx, mol, conformerId, method, minimizeIts=200)["energy_abs"]
+                conformerPropsDict[conformerId]["energy_abs"] = \
+                    calc_energy(idx, mol, conformerId, method, minimizeIts=200)["energy_abs"]
                 if conformerPropsDict[conformerId]["energy_abs"] == None:
                     Failed_list.append(idx)
                     continue
@@ -197,17 +205,18 @@ def runGenerator(index_list, smiles_list, source_data_name, datadir, structure_d
                 conformerPropsDict[conformerId]["minimize_method"] = method
                 for key in conformerPropsDict[conformerId].keys():
                     mol.SetProp(key, str(conformerPropsDict[conformerId][key]))
-                w.write(mol, confId = conformerId)
+                w.write(mol, confId=conformerId)
                 print("Finish Local Minimization with MMFF")
         else:
             print("Wrong Structure!")
-        
+
         w.flush()
         w.close()
-    
+
     return Failed_list
 
-def get_index(infile,smiles_name,index_name):
+
+def get_index(infile, smiles_name, index_name):
     """Get index and SMILES list 
 
     Args:
@@ -221,7 +230,7 @@ def get_index(infile,smiles_name,index_name):
 
 
 if __name__ == "__main__":
-    size  = "20"
+    size = "20"
     if size + "_confs" not in os.listdir("."):
         os.mkdir(size + "_confs")
     os.chdir(size + "_confs")
@@ -241,5 +250,3 @@ if __name__ == "__main__":
     print(len(index_list_redo))
     structure_dir = "/Users/jianinglu1/Documents/Python_API_2019/my_code/ccdc_structures"
     runGenerator(index_list_redo, smiles_list_redo, structure_dir=structure_dir, numConfs=1000)
-
-
